@@ -10,4 +10,4 @@
 - UI generated with aider
 
 ## Demo
-Feel free to try it out at the following <a href="ironhackable.com/sudoku" target="_blank">link</a>
+Feel free to try it out at the following <a href="httos://ironhackable.com/sudoku" target="_blank">link</a>
