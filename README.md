@@ -1,7 +1,10 @@
 # A simple Sudoku create overnight with PHP.
 
+![alt text](images/sudoku.png "Sudoku")
+
 ## Features
-- Generate random Initial Scheme
+- Generate random initial scheme
 - Select difficulty (Easy, Medium, Hard, Expert)
+- Ability to resolve the scheme by entering input with instant feedback in case the privided number is wrong
 - Ability to provide a solution for a give initial scheme
 - UI generated with aider
