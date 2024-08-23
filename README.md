@@ -8,3 +8,6 @@
 - Ability to resolve the scheme by entering input with instant feedback in case the privided number is wrong
 - Ability to provide a solution for a give initial scheme
 - UI generated with aider
+
+## Demo
+[Demo](https://ironhackable.com/sudoku/)
