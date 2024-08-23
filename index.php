@@ -1,257 +1,255 @@
 <?php
 
-	function populateMatrix() {
-		$index = 1;
-		$matrix = [];
+function populateMatrix() {
+    $index = 1;
+    $matrix = [];
+    
+    for ($x = 0;$x <= 8;$x++) {
+        for ($y = 0;$y <= 8;$y++) {
+            $matrix[$x][$y] = "&nbsp;";
+            $index++;
+        }
+    }
+    
+    return $matrix;
+}
 
-		for ($x = 0; $x <= 8; $x++) {
-			for ($y = 0; $y <= 8; $y++) {
-				$matrix[$x][$y] = '&nbsp;';
-				$index++;
-			}
-		}
+function createInitialScheme($difficulty = "medium") {
+    $matrix = populateMatrix();
+    solveSudoku($matrix);
+    shuffleSolvedSudoku($matrix);
+    $cellsToKeep = getDifficultyLevel($difficulty);
+    $cellsToRemove = 81 - $cellsToKeep;
+    
+    while ($cellsToRemove > 0) {
+        $row = rand(0, 8);
+        $col = rand(0, 8);
+        if ($matrix[$row][$col] != "&nbsp;") {
+            $matrix[$row][$col] = "&nbsp;";
+            $cellsToRemove--;
+        }
+    }
+    
+    return $matrix;
+}
 
-		return $matrix;
-	}
+function getDifficultyLevel($difficulty) {
+    switch ($difficulty) {
+        case "easy":
+            return 35;
+        case "medium":
+            return 30;
+        case "hard":
+            return 25;
+        case "expert":
+            return 20;
+        default:
+            return 30; // Default to medium
+            
+    }
+}
 
-	function createInitialScheme($difficulty = 'medium') {
-		$matrix = populateMatrix();
-		solveSudoku($matrix);
-		shuffleSolvedSudoku($matrix);
-		
-		$cellsToKeep = getDifficultyLevel($difficulty);
-		$cellsToRemove = 81 - $cellsToKeep;
-		
-		while ($cellsToRemove > 0) {
-			$row = rand(0, 8);
-			$col = rand(0, 8);
-			
-			if ($matrix[$row][$col] != '&nbsp;') {
-				$matrix[$row][$col] = '&nbsp;';
-				$cellsToRemove--;
-			}
-		}
-		
-		return $matrix;
-	}
+function shuffleSolvedSudoku(&$matrix) {
+    // Shuffle rows within each block
+    for ($block = 0;$block < 3;$block++) {
+        $rowStart = $block * 3;
+        for ($i = 0;$i < 3;$i++) {
+            $row1 = $rowStart + rand(0, 2);
+            $row2 = $rowStart + rand(0, 2);
+            for ($col = 0;$col < 9;$col++) {
+                $temp = $matrix[$row1][$col];
+                $matrix[$row1][$col] = $matrix[$row2][$col];
+                $matrix[$row2][$col] = $temp;
+            }
+        }
+    }
+    
+    // Shuffle columns within each block
+    for ($block = 0;$block < 3;$block++) {
+        $colStart = $block * 3;
+        
+        for ($i = 0;$i < 3;$i++) {
+            $col1 = $colStart + rand(0, 2);
+            $col2 = $colStart + rand(0, 2);
+            
+            for ($row = 0;$row < 9;$row++) {
+                $temp = $matrix[$row][$col1];
+                $matrix[$row][$col1] = $matrix[$row][$col2];
+                $matrix[$row][$col2] = $temp;
+            }
+        }
+    }
+    
+    // Shuffle row blocks
+    for ($i = 0;$i < 3;$i++) {
+        $block1 = rand(0, 2);
+        $block2 = rand(0, 2);
+        
+        for ($row = 0;$row < 3;$row++) {
+            $tempRow = $matrix[$block1 * 3 + $row];
+            $matrix[$block1 * 3 + $row] = $matrix[$block2 * 3 + $row];
+            $matrix[$block2 * 3 + $row] = $tempRow;
+        }
+    }
+    // Shuffle column blocks
+    for ($i = 0;$i < 3;$i++) {
+        $block1 = rand(0, 2);
+        $block2 = rand(0, 2);
+        
+        for ($col = 0;$col < 3;$col++) {
+            for ($row = 0;$row < 9;$row++) {
+                $temp = $matrix[$row][$block1 * 3 + $col];
+                $matrix[$row][$block1 * 3 + $col] = $matrix[$row][$block2 * 3 + $col];
+                $matrix[$row][$block2 * 3 + $col] = $temp;
+            }
+        }
+    }
+}
 
-	function getDifficultyLevel($difficulty) {
-		switch ($difficulty) {
-			case 'easy':
-				return 35;
-			case 'medium':
-				return 30;
-			case 'hard':
-				return 25;
-			case 'expert':
-				return 20;
-			default:
-				return 30; // Default to medium
-		}
-	}
+function solveSudoku(&$matrix) {
+    $emptyCell = findEmptyCell($matrix);
+    
+    if (!$emptyCell) {
+        return true;
+    }
+    
+    list($row, $col) = $emptyCell;
+    
+    for ($num = 1;$num <= 9;$num++) {
+        if (checkValidity($matrix, $row, $col, $num)) {
+            $matrix[$row][$col] = $num;
+            if (solveSudoku($matrix)) {
+                return true;
+            }
+            $matrix[$row][$col] = "&nbsp;";
+        }
+    }
+    
+    return false;
+}
 
-	function shuffleSolvedSudoku(&$matrix) {
-		// Shuffle rows within each block
-		for ($block = 0; $block < 3; $block++) {
-			$rowStart = $block * 3;
-			for ($i = 0; $i < 3; $i++) {
-				$row1 = $rowStart + rand(0, 2);
-				$row2 = $rowStart + rand(0, 2);
-				for ($col = 0; $col < 9; $col++) {
-					$temp = $matrix[$row1][$col];
-					$matrix[$row1][$col] = $matrix[$row2][$col];
-					$matrix[$row2][$col] = $temp;
-				}
-			}
-		}
+function isSolvable($matrix) {
+    $tempMatrix = $matrix;
+    return solveSudoku($tempMatrix);
+}
 
-		// Shuffle columns within each block
-		for ($block = 0; $block < 3; $block++) {
-			$colStart = $block * 3;
-			for ($i = 0; $i < 3; $i++) {
-				$col1 = $colStart + rand(0, 2);
-				$col2 = $colStart + rand(0, 2);
-				for ($row = 0; $row < 9; $row++) {
-					$temp = $matrix[$row][$col1];
-					$matrix[$row][$col1] = $matrix[$row][$col2];
-					$matrix[$row][$col2] = $temp;
-				}
-			}
-		}
+function checkValidity($matrix, $col, $row, $value) {
+    $status = true;
+    
+    // check value in column
+    for ($y = 0;$y <= 8;$y++) {
+        if ($y == $col) {
+            for ($x = 0;$x <= 8;$x++) {
+                if ($matrix[$y][$x] == $value) {
+                    $status = false;
+                }
+            }
+        }
+    }
+    
+    // check value in row
+    for ($y = 0;$y <= 8;$y++) {
+        for ($x = 0;$x <= 8;$x++) {
+            if ($x == $row) {
+                if ($matrix[$y][$x] == $value) {
+                    $status = false;
+                }
+            }
+        }
+    }
+    
+    // check value in square
+    $values = determineSquare($col, $row);
+    for ($y = $values["fromY"];$y <= $values["toY"];$y++) {
+        for ($x = $values["fromX"];$x <= $values["toX"];$x++) {
+            if ($matrix[$y][$x] == $value) {
+                $status = false;
+            }
+        }
+    }
+    
+    return $status;
+}
 
-		// Shuffle row blocks
-		for ($i = 0; $i < 3; $i++) {
-			$block1 = rand(0, 2);
-			$block2 = rand(0, 2);
-			for ($row = 0; $row < 3; $row++) {
-				$tempRow = $matrix[$block1 * 3 + $row];
-				$matrix[$block1 * 3 + $row] = $matrix[$block2 * 3 + $row];
-				$matrix[$block2 * 3 + $row] = $tempRow;
-			}
-		}
+function determineSquare($y, $x) {
+    if ($y >= 0 && $y <= 2 && $x >= 0 && $x <= 2) {
+        return ["fromY" => 0, "toY" => 2, "fromX" => 0, "toX" => 2, "square" => "square1", ];
+    } elseif ($y >= 0 && $y <= 2 && $x >= 3 && $x <= 5) {
+        return ["fromY" => 0, "toY" => 2, "fromX" => 3, "toX" => 5, "square" => "square2", ];
+    } elseif ($y >= 0 && $y <= 2 && $x >= 6 && $x <= 8) {
+        return ["fromY" => 0, "toY" => 2, "fromX" => 6, "toX" => 8, "square" => "square3", ];
+    } elseif ($y >= 3 && $y <= 5 && $x >= 0 && $x <= 2) {
+        return ["fromY" => 3, "toY" => 5, "fromX" => 0, "toX" => 2, "square" => "square4", ];
+    } elseif ($y >= 3 && $y <= 5 && $x >= 3 && $x <= 5) {
+        return ["fromY" => 3, "toY" => 5, "fromX" => 3, "toX" => 5, "square" => "square5", ];
+    } elseif ($y >= 3 && $y <= 5 && $x >= 6 && $x <= 8) {
+        return ["fromY" => 3, "toY" => 5, "fromX" => 6, "toX" => 8, "square" => "square6", ];
+    } elseif ($y >= 6 && $y <= 8 && $x >= 0 && $x <= 2) {
+        return ["fromY" => 6, "toY" => 8, "fromX" => 0, "toX" => 2, "square" => "square7", ];
+    } elseif ($y >= 6 && $y <= 8 && $x >= 3 && $x <= 5) {
+        return ["fromY" => 6, "toY" => 8, "fromX" => 3, "toX" => 5, "square" => "square8", ];
+    } elseif ($y >= 6 && $y <= 8 && $x >= 6 && $x <= 8) {
+        return ["fromY" => 6, "toY" => 8, "fromX" => 6, "toX" => 8, "square" => "square9", ];
+    }
+}
 
-		// Shuffle column blocks
-		for ($i = 0; $i < 3; $i++) {
-			$block1 = rand(0, 2);
-			$block2 = rand(0, 2);
-			for ($col = 0; $col < 3; $col++) {
-				for ($row = 0; $row < 9; $row++) {
-					$temp = $matrix[$row][$block1 * 3 + $col];
-					$matrix[$row][$block1 * 3 + $col] = $matrix[$row][$block2 * 3 + $col];
-					$matrix[$row][$block2 * 3 + $col] = $temp;
-				}
-			}
-		}
-	}
+function findEmptyCell($matrix) {
+    for ($row = 0;$row < 9;$row++) {
+        for ($col = 0;$col < 9;$col++) {
+            if ($matrix[$row][$col] == "&nbsp;") {
+                return [$row, $col];
+            }
+        }
+    }
+    
+    return false;
+}
+function checkPossibleValidNumbers($matrix, $column, $row) {
+    $numbers = [];
+    for ($i = 1;$i <= 9;$i++) {
+        if (checkValidity($matrix, $column, $row, $i)) {
+            $numbers[] = $i;
+        }
+    }
+    return $numbers;
+}
 
-	function solveSudoku(&$matrix) {
-		$emptyCell = findEmptyCell($matrix);
+if (isset($_REQUEST["action"])) {
+    switch ($_REQUEST["action"]) {
+        case "new_scheme":
+            $difficulty = isset($_POST["difficulty"]) ? $_POST["difficulty"] : "medium";
+            $matrix = createInitialScheme($difficulty);
+            $originalMatrix = $matrix;
+        break;
+        case "solve":
+            $matrix = unserialize($_POST["matrix"]);
+            $originalMatrix = $matrix;
+            solveSudoku($matrix);
+        break;
+        case "check":
+            $matrix = unserialize($_POST["matrix"]);
+            $row = $_POST["row"];
+            $col = $_POST["col"];
+            $value = $_POST["value"];
+            
+            if ($value !== "") {
+                $correct = checkValidity($matrix, $row, $col, $value);
+                solveSudoku($matrix);
+                
+                if ($matrix[$row][$col] == $value) {
+                    echo json_encode(["correct" => true]);
+                    exit();
+                }
+                echo json_encode(["correct" => false]);
+            }
+            exit();
+    }
+} else {
+    $matrix = createInitialScheme();
+    $originalMatrix = $matrix;
+}
 
-		if(!$emptyCell) {
-			return true;
-		}
-		
-		list($row, $col) = $emptyCell;
-		
-		for ($num = 1; $num <= 9; $num++) {
-			if (checkValidity($matrix, $row, $col, $num)) {
-				$matrix[$row][$col] = $num;
-				
-				if (solveSudoku($matrix)) {
-					return true;
-				}
-				
-				$matrix[$row][$col] = '&nbsp;';
-			}
-		}
-		
-		return false;
-	}
-
-	function isSolvable($matrix) {
-		$tempMatrix = $matrix;
-		return solveSudoku($tempMatrix);
-	}
-
-	function checkValidity($matrix, $col, $row, $value) {
-		$status = true;
-
-		// check value in column
-		for ($y = 0; $y <= 8; $y++) {
-			if($y == $col){
-				for ($x = 0; $x <= 8; $x++) {
-					if($matrix[$y][$x] == $value){
-						$status = false;
-					}
-				}
-			}
-		}
-
-		// check value in row
-		for ($y = 0; $y <= 8; $y++) {
-			for ($x = 0; $x <= 8; $x++) {
-				if($x == $row){
-					if($matrix[$y][$x] == $value){
-						$status = false;
-					}
-				}
-			}
-		}
-
-		// check value in square
-		$values = determineSquare($col, $row);
-
-		for ($y = $values['fromY']; $y <= $values['toY']; $y++) {
-			for ($x = $values['fromX']; $x <= $values['toX']; $x++) {
-				if($matrix[$y][$x] == $value){
-					$status = false;
-				}
-			}
-		}
-
-		return $status;
-	}
-
-	function determineSquare($y, $x){
-		if(($y >= 0 && $y <= 2) && $x>=0 && $x <= 2){
-			return ['fromY' => 0, 'toY' => 2, 'fromX' => 0, 'toX' => 2, 'square' => 'square1'];
-		} else if(($y >= 0 && $y <= 2) && $x>=3 && $x <= 5){
-			return ['fromY' => 0, 'toY' => 2, 'fromX' => 3, 'toX' => 5, 'square' => 'square2'];
-		} else if(($y >= 0 && $y <= 2) && $x>=6 && $x <= 8){
-			return ['fromY' => 0, 'toY' => 2, 'fromX' => 6, 'toX' => 8, 'square' => 'square3'];
-		} else if(($y >= 3 && $y <= 5) && $x>=0 && $x <= 2){
-			return ['fromY' => 3, 'toY' => 5, 'fromX' => 0, 'toX' => 2, 'square' => 'square4'];
-		} else if(($y >= 3 && $y <= 5) && $x>=3 && $x <= 5){
-			return ['fromY' => 3, 'toY' => 5, 'fromX' => 3, 'toX' => 5, 'square' => 'square5'];
-		} else if(($y >= 3 && $y <= 5) && $x>=6 && $x <= 8){
-			return ['fromY' => 3, 'toY' => 5, 'fromX' => 6, 'toX' => 8, 'square' => 'square6'];
-		} else if(($y >= 6 && $y <= 8) && $x>=0 && $x <= 2){
-			return ['fromY' => 6, 'toY' => 8, 'fromX' => 0, 'toX' => 2, 'square' => 'square7'];
-		} else if(($y >= 6 && $y <= 8) && $x>=3 && $x <= 5){
-			return ['fromY' => 6, 'toY' => 8, 'fromX' => 3, 'toX' => 5, 'square' => 'square8'];
-		} else if(($y >= 6 && $y <= 8) && $x>=6 && $x <= 8){
-			return ['fromY' => 6, 'toY' => 8, 'fromX' => 6, 'toX' => 8, 'square' => 'square9'];
-		}
-	}
-
-	function findEmptyCell($matrix) {
-		for ($row = 0; $row < 9; $row++) {
-			for ($col = 0; $col < 9; $col++) {
-				if ($matrix[$row][$col] == '&nbsp;') {
-					return [$row, $col];
-				}
-			}
-		}
-		return false;
-	}
-
-	function checkPossibleValidNumbers($matrix, $column, $row) {
-		$numbers = [];
-		for ($i = 1; $i <= 9; $i++) {
-			if(checkValidity($matrix, $column, $row, $i)) {
-				$numbers[] = $i;
-			}
-		}
-
-		return $numbers;
-	}
-
-	if(isset($_REQUEST['action'])) {
-		switch($_REQUEST['action']) {
-		    case 'new_scheme':
-		    	$difficulty = isset($_POST['difficulty']) ? $_POST['difficulty'] : 'medium';
-		    	$matrix = createInitialScheme($difficulty);
-				$originalMatrix = $matrix;
-		    	break;
-		    case 'solve':
-		         $matrix = unserialize($_POST['matrix']);
-		         $originalMatrix = $matrix;
-		    	 solveSudoku($matrix);
-		         break;
-		    case 'check':
-		         $matrix = unserialize($_POST['matrix']);
-		         $row = $_POST['row'];
-		         $col = $_POST['col'];
-		         $value = $_POST['value'];
-		         if ($value !== '') {
-		             $correct = checkValidity($matrix, $row, $col, $value);
-		             solveSudoku($matrix);
-						if($matrix[$row][$col] == $value) {
-							echo json_encode(['correct' => true]);
-							exit;
-						}
-
-		            
-					echo json_encode(['correct' => false]);
-		         }
-		         exit;
-		}
-	} else {
-		$matrix = createInitialScheme();
-		$originalMatrix = $matrix;
-	}
-	$difficulty = isset($_POST['difficulty']) ? $_POST['difficulty'] : 'medium';
-	
+$difficulty = isset($_POST["difficulty"]) ? $_POST["difficulty"] : "medium";
 ?>
 
 <!DOCTYPE html>
@@ -448,7 +446,7 @@
         }
         
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?=$_SERVER['PHP_SELF'];?>?action=check', true);
+        xhr.open('POST', '<?=$_SERVER["PHP_SELF"] ?>?action=check', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
           if (this.status === 200) {
@@ -537,32 +535,36 @@
 <body>
     <div class="sudoku-container">
         <table>
-            <?php for($row = 0; $row < 9; $row++) { ?>
+            <?php for ($row = 0;$row < 9;$row++) { ?>
                 <tr>
-                    <?php for($col = 0; $col < 9; $col++)  { ?>
+                    <?php for ($col = 0;$col < 9;$col++) { ?>
                         <td>
-                            <?php if($originalMatrix[$row][$col] == $matrix[$row][$col] && $matrix[$row][$col] != '&nbsp;') { ?>
+                            <?php if ($originalMatrix[$row][$col] == $matrix[$row][$col] && $matrix[$row][$col] != "&nbsp;") { ?>
                                 <input type="text" value="<?php echo $matrix[$row][$col]; ?>" readonly style="font-weight: bold; color: #000;">
-                            <?php } else { ?>
-                                <input type="text" value="<?php echo ($matrix[$row][$col] != '&nbsp;' ? $matrix[$row][$col] : ''); ?>" maxlength="1" oninput="checkInput(this, <?php echo $row; ?>, <?php echo $col; ?>)">
-                            <?php } ?>
+                            <?php
+        			} else { ?>
+                                <input type="text" value="<?php echo $matrix[$row][$col] != "&nbsp;" ? $matrix[$row][$col] : ""; ?>" maxlength="1" oninput="checkInput(this, <?php echo $row; ?>, <?php echo $col; ?>)">
+                            <?php
+        			} ?>
                         </td>
-                    <?php } ?>
+                    <?php
+    			} ?>
                 </tr>
-            <?php } ?>
+            <?php
+		} ?>
         </table>
 
         <form id="actions" method="POST">
             <input type='hidden' name='matrix' value="<?php echo htmlentities(serialize($matrix)); ?>" />
             <div class="actions">
                 <select name="difficulty">
-                    <option value="easy" <?php echo $difficulty == 'easy' ? 'selected' : ''; ?>>Easy</option>
-                    <option value="medium" <?php echo $difficulty == 'medium' ? 'selected' : ''; ?>>Medium</option>
-                    <option value="hard" <?php echo $difficulty == 'hard' ? 'selected' : ''; ?>>Hard</option>
-                    <option value="expert" <?php echo $difficulty == 'expert' ? 'selected' : ''; ?>>Expert</option>
+                    <option value="easy" <?php echo $difficulty == "easy" ? "selected" : ""; ?>>Easy</option>
+                    <option value="medium" <?php echo $difficulty == "medium" ? "selected" : ""; ?>>Medium</option>
+                    <option value="hard" <?php echo $difficulty == "hard" ? "selected" : ""; ?>>Hard</option>
+                    <option value="expert" <?php echo $difficulty == "expert" ? "selected" : ""; ?>>Expert</option>
                 </select>
-                <input type="button" onclick="submitForm('<?=$_SERVER['PHP_SELF'];?>?action=new_scheme')" value="New Puzzle" />
-                <input type="button" onclick="submitForm('<?=$_SERVER['PHP_SELF'];?>?action=solve')" value="Solve" />
+                <input type="button" onclick="submitForm('<?=$_SERVER["PHP_SELF"] ?>?action=new_scheme')" value="New Puzzle" />
+                <input type="button" onclick="submitForm('<?=$_SERVER["PHP_SELF"] ?>?action=solve')" value="Solve" />
             </div>
         </form>
     </div>
