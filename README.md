@@ -10,4 +10,4 @@
 - UI generated with aider
 
 ## Demo
-[Demo](https://ironhackable.com/sudoku/)
+Feel free to try it out at the following [link](https://ironhackable.com/sudoku/)
