@@ -1,4 +1,4 @@
-# A simple Sudoku create overnight with PHP.
+# A simple Sudoku created overnight with PHP.
 
 ![alt text](images/sudoku.png "Sudoku")
 
